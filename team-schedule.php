@@ -17,6 +17,7 @@ define( 'TEAM_SCHEDULE_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 
 // Include necessary files
 include_once TEAM_SCHEDULE_PLUGIN_DIR . 'includes/class-team-schedule-cpt.php';
+include_once TEAM_SCHEDULE_PLUGIN_DIR . 'includes/class-team-schedule-import.php';
 include_once TEAM_SCHEDULE_PLUGIN_DIR . 'src/team-schedule-block/team-schedule-block.php';
 
 // Register activation and deactivation hooks
