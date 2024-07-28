@@ -91,13 +91,21 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
 
         public static function render_meta_box( $post ) {
             wp_nonce_field( 'team_games_meta_box', 'team_games_meta_box_nonce' );
-
+        
             $games = get_post_meta( $post->ID, 'team_games', true );
             if ( ! is_array( $games ) ) {
                 $games = [];
             }
-
-            echo '<table id="team-games-table">';
+        
+            $teams = get_posts( array(
+                'post_type'   => 'team',
+                'numberposts' => -1,
+                'exclude'     => array( $post->ID ),
+            ));
+        
+            echo '<table id="team-games-table" data-teams="' . esc_attr( json_encode( array_map( function( $team ) {
+                return [ 'id' => $team->ID, 'title' => $team->post_title ];
+            }, $teams ) ) ) . '">';
             echo '<thead><tr><th>' . __( 'Date', 'team-schedule' ) . '</th><th>' . __( 'Time', 'team-schedule' ) . '</th><th>' . __( 'Home/Away', 'team-schedule' ) . '</th><th>' . __( 'Field', 'team-schedule' ) . '</th><th>' . __( 'Opponent', 'team-schedule' ) . '</th></tr></thead>';
             echo '<tbody>';
             foreach ( $games as $index => $game ) {
@@ -106,13 +114,19 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
                 echo '<td><input type="time" name="team_games[time][]" value="' . esc_attr( $game['time'] ) . '" /></td>';
                 echo '<td><input type="text" name="team_games[home_away][]" value="' . esc_attr( $game['home_away'] ) . '" /></td>';
                 echo '<td><input type="text" name="team_games[field][]" value="' . esc_attr( $game['field'] ) . '" /></td>';
-                echo '<td><input type="text" name="team_games[opponent][]" value="' . esc_attr( $game['opponent'] ) . '" /></td>';
+                echo '<td><select name="team_games[opponent][]">';
+                foreach ( $teams as $team ) {
+                    $selected = ( $game['opponent'] == $team->ID ) ? 'selected="selected"' : '';
+                    echo '<option value="' . esc_attr( $team->ID ) . '" ' . $selected . '>' . esc_html( $team->post_title ) . '</option>';
+                }
+                echo '</select></td>';
                 echo '</tr>';
             }
             echo '</tbody>';
             echo '</table>';
             echo '<button type="button" class="button add-game">' . __( 'Add Game', 'team-schedule' ) . '</button>';
         }
+        
 
         public static function enqueue_admin_scripts() {
             wp_enqueue_script( 'team-schedule-admin', plugin_dir_url( __FILE__ ) . 'admin.js', array( 'jquery' ), TEAM_SCHEDULE_VERSION, true );
@@ -139,7 +153,7 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
                         'time'      => sanitize_text_field( $_POST['team_games']['time'][ $index ] ),
                         'home_away' => sanitize_text_field( $_POST['team_games']['home_away'][ $index ] ),
                         'field'     => sanitize_text_field( $_POST['team_games']['field'][ $index ] ),
-                        'opponent'  => sanitize_text_field( $_POST['team_games']['opponent'][ $index ] ),
+                        'opponent'  => intval( $_POST['team_games']['opponent'][ $index ] ),
                     ];
                 }
                 update_post_meta( $post_id, 'team_games', $games );
