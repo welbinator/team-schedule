@@ -1,27 +1,136 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const blocks = document.querySelectorAll('.wp-block-create-block-team-schedule-block');
+document.addEventListener('DOMContentLoaded', function() {
+    const dropdown = document.querySelector('.team-schedule-dropdown');
+    const gamesContainer = document.querySelector('.team-schedule-games');
 
-    blocks.forEach(block => {
-        const select = block.querySelector('.team-schedule-select');
-        const list = block.querySelector('.team-schedule-list');
+    if (dropdown) {
+        if (!dropdown.hasEventListener) {
+            dropdown.hasEventListener = true;
 
-        // Fetch teams and populate the dropdown
-        fetch('/wp-json/wp/v2/team')
-            .then(response => response.json())
-            .then(data => {
-                select.innerHTML = data.map(team => `<option value="${team.id}">${team.title.rendered}</option>`).join('');
-                // Trigger change event to load the first team's schedule
-                select.dispatchEvent(new Event('change'));
-            });
-
-        // Fetch and display games for the selected team
-        select.addEventListener('change', () => {
-            const teamId = select.value;
-            fetch(`/wp-json/wp/v2/games?team=${teamId}`)
+            // Fetch teams and populate the dropdown
+            fetch('/wp-json/team-schedule/v1/teams')
                 .then(response => response.json())
                 .then(data => {
-                    list.innerHTML = data.map(game => `<li>${game.date} - ${game.opponent} (${game.home_away}) at ${game.field} - ${game.time}</li>`).join('');
-                });
-        });
-    });
+                    if (data.length === 0) {
+                        dropdown.innerHTML = '<option value="">No teams found</option>';
+                    } else {
+                        dropdown.innerHTML = ''; // Clear previous options
+                        data.forEach(team => {
+                            const option = document.createElement('option');
+                            option.value = team.ID;
+                            option.textContent = team.post_title;
+                            dropdown.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error fetching teams:', error));
+
+            dropdown.addEventListener('change', function() {
+                const teamId = dropdown.value;
+                if (teamId) {
+                    fetch(`/wp-json/team-schedule/v1/games?team=${teamId}`)
+                        .then(response => response.json())
+                        .then(async data => {
+                            gamesContainer.innerHTML = ''; // Clear previous games
+
+                            if (data.length === 0) {
+                                gamesContainer.innerHTML = 'No games found for this team.';
+                            } else {
+                                const card = document.createElement('div');
+                                card.classList.add('rounded-lg', 'border', 'bg-card', 'text-card-foreground', 'shadow-sm');
+
+                                const header = document.createElement('div');
+                                header.classList.add('flex', 'flex-col', 'space-y-1.5', 'p-6', 'px-7');
+
+                                const title = document.createElement('h3');
+                                title.classList.add('whitespace-nowrap', 'text-2xl', 'font-semibold', 'leading-none', 'tracking-tight');
+                                title.textContent = 'Upcoming Games';
+
+                                const description = document.createElement('p');
+                                description.classList.add('text-sm', 'text-muted-foreground');
+                                description.textContent = 'Schedule of upcoming games.';
+
+                                header.appendChild(title);
+                                header.appendChild(description);
+
+                                const content = document.createElement('div');
+                                content.classList.add('p-6');
+
+                                const tableWrapper = document.createElement('div');
+                                tableWrapper.classList.add('relative', 'w-full', 'overflow-auto');
+
+                                const table = document.createElement('table');
+                                table.classList.add('w-full', 'caption-bottom', 'text-sm');
+
+                                const thead = document.createElement('thead');
+                                thead.classList.add('[&amp;_tr]:border-b');
+                                const headerRow = document.createElement('tr');
+                                headerRow.classList.add('border-b', 'transition-colors', 'hover:bg-muted/50', 'data-[state=selected]:bg-muted');
+
+                                const columns = ['Date', 'Time', 'Home/Away', 'Field', 'Opponent'];
+                                columns.forEach(column => {
+                                    const th = document.createElement('th');
+                                    th.classList.add('h-12', 'px-4', 'text-left', 'align-middle', 'font-medium', 'text-muted-foreground');
+                                    th.textContent = column;
+                                    headerRow.appendChild(th);
+                                });
+
+                                thead.appendChild(headerRow);
+                                table.appendChild(thead);
+
+                                const tbody = document.createElement('tbody');
+                                tbody.classList.add('[&amp;_tr:last-child]:border-0');
+
+                                for (const game of data) {
+                                    const opponentName = await fetchOpponentName(game.opponent);
+                                    const gameRow = document.createElement('tr');
+                                    gameRow.classList.add('border-b', 'transition-colors', 'hover:bg-muted/50', 'data-[state=selected]:bg-muted');
+
+                                    const cells = [game.date, formatTime(game.time), game.home_away, game.field, opponentName];
+                                    cells.forEach(cell => {
+                                        const td = document.createElement('td');
+                                        td.classList.add('p-4', 'align-middle');
+                                        td.textContent = cell;
+                                        gameRow.appendChild(td);
+                                    });
+
+                                    tbody.appendChild(gameRow);
+                                }
+
+                                table.appendChild(tbody);
+                                tableWrapper.appendChild(table);
+                                content.appendChild(tableWrapper);
+
+                                card.appendChild(header);
+                                card.appendChild(content);
+
+                                gamesContainer.appendChild(card);
+                            }
+                        })
+                        .catch(error => console.error('Error fetching games:', error));
+                } else {
+                    gamesContainer.innerHTML = 'Please choose a team.';
+                }
+            });
+        }
+    }
 });
+
+async function fetchOpponentName(opponentId) {
+    try {
+        const response = await fetch(`/wp-json/wp/v2/team/${opponentId}`);
+        const data = await response.json();
+        return data.title.rendered || 'Unknown Opponent';
+    } catch (error) {
+        console.error('Error fetching opponent name:', error);
+        return 'Unknown Opponent';
+    }
+}
+
+function formatTime(timeString) {
+    const [hours, minutes] = timeString.split(':');
+    const date = new Date();
+    date.setHours(hours);
+    date.setMinutes(minutes);
+    const options = { hour: 'numeric', minute: 'numeric', hour12: true };
+    return new Intl.DateTimeFormat('en-US', options).format(date);
+}

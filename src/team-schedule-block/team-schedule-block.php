@@ -33,7 +33,7 @@ function team_schedule_enqueue_block_editor_assets() {
 
             wp_enqueue_style(
                 'team-schedule-block-editor-style',
-                plugin_dir_url( __FILE__ ) . '../../build/team-schedule-block/index.css',
+                plugin_dir_url( __FILE__ ) . '../../build/team-schedule-block/style-index.css',
                 array( 'wp-edit-blocks' ),
                 TEAM_SCHEDULE_VERSION
             );
