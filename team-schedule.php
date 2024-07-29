@@ -2,7 +2,7 @@
 /*
 Plugin Name: Team Schedule
 Description: A plugin to display team schedules for sports leagues.
-Version: 1.0.8
+Version: 1.0.9
 Author: James Welbes
 Text Domain: team-schedule-block
 */

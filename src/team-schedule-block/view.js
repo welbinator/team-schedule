@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                                 const description = document.createElement('p');
                                 description.classList.add('text-sm', 'text-muted-foreground');
-                                description.textContent = 'Schedule of upcoming games.';
+                                
 
                                 header.appendChild(title);
                                 header.appendChild(description);
