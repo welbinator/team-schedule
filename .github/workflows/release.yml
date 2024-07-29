@@ -15,25 +15,24 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Create temporary directory
-      run: |
-        mkdir temp_dir
+      run: mkdir temp_dir
 
     - name: Copy files to temporary directory
       run: |
         find . -maxdepth 1 -not -name 'temp_dir' -not -name '.' -not -name '.git' -not -name '.github' -exec cp -r {} temp_dir/ \;
 
     - name: Rename directory
-      run: |
-        mv temp_dir team-schedule
+      run: mv temp_dir team-schedule
+
+    - name: List files before zipping
+      run: ls -R team-schedule
 
     - name: Zip the folder
       run: |
         zip -r team-schedule-${{ github.event.inputs.tag }}.zip team-schedule \
-        -x "*.git/*" "*.github/*" \
-        "team-schedule/composer.json" "team-schedule/composer.lock" \
+        -x "team-schedule/.git/*" "team-schedule/.github/*" \
         "team-schedule/package.json" "team-schedule/package-lock.json" \
-        "team-schedule/.gitignore" "team-schedule/webpack.config.js" \ 
-        "team-schedule/src/*"
+        "team-schedule/.gitignore" "team-schedule/src/*"
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
