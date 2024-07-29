@@ -37,6 +37,7 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
                 'show_in_rest' => true,
                 'supports' => array( 'title', 'editor', 'custom-fields' ),
                 'menu_icon' => 'dashicons-groups',
+                'rewrite' => array( 'slug' => 'team-schedule-team' ), // Unique slug
             );
 
             register_post_type( 'team', $args );
@@ -70,19 +71,14 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
 
         public static function get_games( $request ) {
             $team_id = $request->get_param( 'team' );
-          
             $games = get_post_meta( $team_id, 'team_games', true );
-        
+
             if ( ! is_array( $games ) ) {
                 $games = [];
             }
-        
-            // Log the fetched games
-           
-        
+
             return rest_ensure_response( $games );
         }
-        
 
         public static function add_meta_boxes() {
             add_meta_box(
@@ -121,7 +117,6 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
                 echo '<td><input type="text" name="team_games[home_away][]" value="' . esc_attr( $game['home_away'] ) . '" /></td>';
                 echo '<td><input type="text" name="team_games[field][]" value="' . esc_attr( $game['field'] ) . '" /></td>';
                 echo '<td><select name="team_games[opponent][]">';
-                echo '<option value="">' . __( 'Choose opponent', 'team-schedule' ) . '</option>';
                 foreach ( $teams as $team ) {
                     $selected = ( $game['opponent'] == $team->ID ) ? 'selected="selected"' : '';
                     echo '<option value="' . esc_attr( $team->ID ) . '" ' . $selected . '>' . esc_html( $team->post_title ) . '</option>';
@@ -137,7 +132,6 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
             echo '<td><input type="text" name="team_games[home_away][]" /></td>';
             echo '<td><input type="text" name="team_games[field][]" /></td>';
             echo '<td><select name="team_games[opponent][]">';
-            echo '<option value="">' . __( 'Choose opponent', 'team-schedule' ) . '</option>';
             foreach ( $teams as $team ) {
                 echo '<option value="' . esc_attr( $team->ID ) . '">' . esc_html( $team->post_title ) . '</option>';
             }
@@ -171,10 +165,6 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
                     $home_away = sanitize_text_field( $_POST['team_games']['home_away'][ $index ] );
                     $opponent_id = intval( $_POST['team_games']['opponent'][ $index ] );
 
-                    if ( $opponent_id === 0 ) {
-                        continue; // Skip if "Choose opponent" is selected
-                    }
-
                     $games[] = [
                         'date'      => sanitize_text_field( $date ),
                         'time'      => sanitize_text_field( $_POST['team_games']['time'][ $index ] ),
@@ -183,57 +173,57 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
                         'opponent'  => $opponent_id,
                     ];
 
-                    // Automatically add the game to the opponent team as well
-                    $opponent_games = get_post_meta( $opponent_id, 'team_games', true );
+                                        // Automatically add the game to the opponent team as well
+                                        $opponent_games = get_post_meta( $opponent_id, 'team_games', true );
 
-                    if ( ! is_array( $opponent_games ) ) {
-                        $opponent_games = [];
+                                        if ( ! is_array( $opponent_games ) ) {
+                                            $opponent_games = [];
+                                        }
+                    
+                                        $opponent_home_away = ($home_away === 'Home') ? 'Away' : 'Home';
+                    
+                                        $opponent_games[] = [
+                                            'date'      => sanitize_text_field( $date ),
+                                            'time'      => sanitize_text_field( $_POST['team_games']['time'][ $index ] ),
+                                            'home_away' => $opponent_home_away,
+                                            'field'     => sanitize_text_field( $_POST['team_games']['field'][ $index ] ),
+                                            'opponent'  => $post_id,
+                                        ];
+                    
+                                        update_post_meta( $opponent_id, 'team_games', $opponent_games );
+                                    }
+                                    update_post_meta( $post_id, 'team_games', $games );
+                                }
+                            }
+                    
+                            public static function delete_opponent_game() {
+                                if ( ! isset( $_POST['opponent_id'], $_POST['date'], $_POST['time'] ) ) {
+                                    wp_send_json_error( 'Invalid data' );
+                                }
+                    
+                                $opponent_id = intval( $_POST['opponent_id'] );
+                                $date = sanitize_text_field( $_POST['date'] );
+                                $time = sanitize_text_field( $_POST['time'] );
+                    
+                                $opponent_games = get_post_meta( $opponent_id, 'team_games', true );
+                    
+                                if ( ! is_array( $opponent_games ) ) {
+                                    $opponent_games = [];
+                                }
+                    
+                                foreach ( $opponent_games as $index => $game ) {
+                                    if ( $game['date'] === $date && $game['time'] === $time ) {
+                                        unset( $opponent_games[ $index ] );
+                                        break;
+                                    }
+                                }
+                    
+                                update_post_meta( $opponent_id, 'team_games', array_values( $opponent_games ) );
+                    
+                                wp_send_json_success( 'Game deleted from opponent' );
+                            }
+                        }
                     }
-
-                    $opponent_home_away = ($home_away === 'Home') ? 'Away' : 'Home';
-
-                    $opponent_games[] = [
-                        'date'      => sanitize_text_field( $date ),
-                        'time'      => sanitize_text_field( $_POST['team_games']['time'][ $index ] ),
-                        'home_away' => $opponent_home_away,
-                        'field'     => sanitize_text_field( $_POST['team_games']['field'][ $index ] ),
-                        'opponent'  => $post_id,
-                    ];
-
-                    update_post_meta( $opponent_id, 'team_games', $opponent_games );
-                }
-                update_post_meta( $post_id, 'team_games', $games );
-            }
-        }
-
-        public static function delete_opponent_game() {
-            if ( ! isset( $_POST['opponent_id'], $_POST['date'], $_POST['time'] ) ) {
-                wp_send_json_error( 'Invalid data' );
-            }
-
-            $opponent_id = intval( $_POST['opponent_id'] );
-            $date = sanitize_text_field( $_POST['date'] );
-            $time = sanitize_text_field( $_POST['time'] );
-
-            $opponent_games = get_post_meta( $opponent_id, 'team_games', true );
-
-            if ( ! is_array( $opponent_games ) ) {
-                $opponent_games = [];
-            }
-
-            foreach ( $opponent_games as $index => $game ) {
-                if ( $game['date'] === $date && $game['time'] === $time ) {
-                    unset( $opponent_games[ $index ] );
-                    break;
-                }
-            }
-
-            update_post_meta( $opponent_id, 'team_games', array_values( $opponent_games ) );
-
-            wp_send_json_success( 'Game deleted from opponent' );
-        }
-    }
-
-    Team_Schedule_CPT::init();
-}
-
+                    
+                    Team_Schedule_CPT::init();
+                    
