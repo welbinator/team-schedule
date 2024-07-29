@@ -32,7 +32,7 @@ jobs:
         zip -r team-schedule-${{ github.event.inputs.tag }}.zip team-schedule \
         -x "team-schedule/.git/*" "team-schedule/.github/*" \
         "team-schedule/package.json" "team-schedule/package-lock.json" \
-        "team-schedule/.gitignore" "team-schedule/src/*"
+        "team-schedule/.gitignore" 
 
     - name: Create Release
       uses: softprops/action-gh-release@v1

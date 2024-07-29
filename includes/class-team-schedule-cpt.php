@@ -7,16 +7,16 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
             add_action( 'init', [ __CLASS__, 'register_cpt' ] );
             add_action( 'rest_api_init', [ __CLASS__, 'register_routes' ] );
             add_action( 'add_meta_boxes', [ __CLASS__, 'add_meta_boxes' ] );
-            add_action( 'save_post_team', [ __CLASS__, 'save_meta_box_data' ] );
+            add_action( 'save_post_team_schedule_team', [ __CLASS__, 'save_meta_box_data' ] );
             add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_scripts' ] );
             add_action( 'wp_ajax_delete_opponent_game', [ __CLASS__, 'delete_opponent_game' ] );
         }
 
         public static function register_cpt() {
             $labels = array(
-                'name' => __( 'Teams', 'team-schedule' ),
+                'name' => __( 'Schedule Teams', 'team-schedule' ),
                 'singular_name' => __( 'Team', 'team-schedule' ),
-                'menu_name' => __( 'Teams', 'team-schedule' ),
+                'menu_name' => __( 'Schedule Teams', 'team-schedule' ),
                 'name_admin_bar' => __( 'Team', 'team-schedule' ),
                 'add_new' => __( 'Add New', 'team-schedule' ),
                 'add_new_item' => __( 'Add New Team', 'team-schedule' ),
@@ -37,10 +37,11 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
                 'show_in_rest' => true,
                 'supports' => array( 'title', 'editor', 'custom-fields' ),
                 'menu_icon' => 'dashicons-groups',
+                'menu_position' => 25, // Unique position
                 'rewrite' => array( 'slug' => 'team-schedule-team' ), // Unique slug
             );
 
-            register_post_type( 'team', $args );
+            register_post_type( 'team_schedule_team', $args );
         }
 
         public static function register_routes() {
@@ -62,7 +63,7 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
 
         public static function get_teams() {
             $teams = get_posts( array(
-                'post_type' => 'team',
+                'post_type' => 'team_schedule_team',
                 'numberposts' => -1,
             ));
 
@@ -85,7 +86,7 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
                 'team_games_meta_box',
                 __( 'Team Games', 'team-schedule' ),
                 [ __CLASS__, 'render_meta_box' ],
-                'team',
+                'team_schedule_team',
                 'normal',
                 'high'
             );
@@ -100,7 +101,7 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
             }
 
             $teams = get_posts( array(
-                'post_type'   => 'team',
+                'post_type'   => 'team_schedule_team',
                 'numberposts' => -1,
                 'exclude'     => array( $post->ID ),
             ));
@@ -173,57 +174,57 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
                         'opponent'  => $opponent_id,
                     ];
 
-                                        // Automatically add the game to the opponent team as well
-                                        $opponent_games = get_post_meta( $opponent_id, 'team_games', true );
+                    // Automatically add the game to the opponent team as well
+                    $opponent_games = get_post_meta( $opponent_id, 'team_games', true );
 
-                                        if ( ! is_array( $opponent_games ) ) {
-                                            $opponent_games = [];
-                                        }
-                    
-                                        $opponent_home_away = ($home_away === 'Home') ? 'Away' : 'Home';
-                    
-                                        $opponent_games[] = [
-                                            'date'      => sanitize_text_field( $date ),
-                                            'time'      => sanitize_text_field( $_POST['team_games']['time'][ $index ] ),
-                                            'home_away' => $opponent_home_away,
-                                            'field'     => sanitize_text_field( $_POST['team_games']['field'][ $index ] ),
-                                            'opponent'  => $post_id,
-                                        ];
-                    
-                                        update_post_meta( $opponent_id, 'team_games', $opponent_games );
-                                    }
-                                    update_post_meta( $post_id, 'team_games', $games );
-                                }
-                            }
-                    
-                            public static function delete_opponent_game() {
-                                if ( ! isset( $_POST['opponent_id'], $_POST['date'], $_POST['time'] ) ) {
-                                    wp_send_json_error( 'Invalid data' );
-                                }
-                    
-                                $opponent_id = intval( $_POST['opponent_id'] );
-                                $date = sanitize_text_field( $_POST['date'] );
-                                $time = sanitize_text_field( $_POST['time'] );
-                    
-                                $opponent_games = get_post_meta( $opponent_id, 'team_games', true );
-                    
-                                if ( ! is_array( $opponent_games ) ) {
-                                    $opponent_games = [];
-                                }
-                    
-                                foreach ( $opponent_games as $index => $game ) {
-                                    if ( $game['date'] === $date && $game['time'] === $time ) {
-                                        unset( $opponent_games[ $index ] );
-                                        break;
-                                    }
-                                }
-                    
-                                update_post_meta( $opponent_id, 'team_games', array_values( $opponent_games ) );
-                    
-                                wp_send_json_success( 'Game deleted from opponent' );
-                            }
-                        }
+                    if ( ! is_array( $opponent_games ) ) {
+                        $opponent_games = [];
                     }
-                    
-                    Team_Schedule_CPT::init();
-                    
+
+                    $opponent_home_away = ($home_away === 'Home') ? 'Away' : 'Home';
+
+                    $opponent_games[] = [
+                        'date'      => sanitize_text_field( $date ),
+                        'time'      => sanitize_text_field( $_POST['team_games']['time'][ $index ] ),
+                        'home_away' => $opponent_home_away,
+                        'field'     => sanitize_text_field( $_POST['team_games']['field'][ $index ] ),
+                        'opponent'  => $post_id,
+                    ];
+
+                    update_post_meta( $opponent_id, 'team_games', $opponent_games );
+                }
+                update_post_meta( $post_id, 'team_games', $games );
+            }
+        }
+
+        public static function delete_opponent_game() {
+            if ( ! isset( $_POST['opponent_id'], $_POST['date'], $_POST['time'] ) ) {
+                wp_send_json_error( 'Invalid data' );
+            }
+
+            $opponent_id = intval( $_POST['opponent_id'] );
+            $date = sanitize_text_field( $_POST['date'] );
+            $time = sanitize_text_field( $_POST['time'] );
+
+            $opponent_games = get_post_meta( $opponent_id, 'team_games', true );
+
+            if ( ! is_array( $opponent_games ) ) {
+                $opponent_games = [];
+            }
+
+            foreach ( $opponent_games as $index => $game ) {
+                if ( $game['date'] === $date && $game['time'] === $time ) {
+                    unset( $opponent_games[ $index ] );
+                    break;
+                }
+            }
+
+            update_post_meta( $opponent_id, 'team_games', array_values( $opponent_games ) );
+
+            wp_send_json_success( 'Game deleted from opponent' );
+        }
+    }
+}
+
+Team_Schedule_CPT::init();
+
