@@ -118,6 +118,7 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
                 echo '<td><input type="text" name="team_games[home_away][]" value="' . esc_attr( $game['home_away'] ) . '" /></td>';
                 echo '<td><input type="text" name="team_games[field][]" value="' . esc_attr( $game['field'] ) . '" /></td>';
                 echo '<td><select name="team_games[opponent][]">';
+                echo '<option value="">' . __( 'Choose Team', 'team-schedule' ) . '</option>';
                 foreach ( $teams as $team ) {
                     $selected = ( $game['opponent'] == $team->ID ) ? 'selected="selected"' : '';
                     echo '<option value="' . esc_attr( $team->ID ) . '" ' . $selected . '>' . esc_html( $team->post_title ) . '</option>';
@@ -133,6 +134,7 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
             echo '<td><input type="text" name="team_games[home_away][]" /></td>';
             echo '<td><input type="text" name="team_games[field][]" /></td>';
             echo '<td><select name="team_games[opponent][]">';
+            echo '<option value="">' . __( 'Choose Team', 'team-schedule' ) . '</option>';
             foreach ( $teams as $team ) {
                 echo '<option value="' . esc_attr( $team->ID ) . '">' . esc_html( $team->post_title ) . '</option>';
             }
