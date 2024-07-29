@@ -70,7 +70,7 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
 
         public static function get_games( $request ) {
             $team_id = $request->get_param( 'team' );
-            error_log( 'Fetching games for team ID: ' . $team_id ); // Log the team ID
+          
             $games = get_post_meta( $team_id, 'team_games', true );
         
             if ( ! is_array( $games ) ) {
@@ -78,7 +78,7 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
             }
         
             // Log the fetched games
-            error_log( 'Fetched games for team ' . $team_id . ': ' . print_r( $games, true ) );
+           
         
             return rest_ensure_response( $games );
         }

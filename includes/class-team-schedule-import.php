@@ -77,7 +77,7 @@ if ( ! class_exists( 'Team_Schedule_Import' ) ) {
             self::add_game_to_team( $away_team_id, $date, $time, 'Away', $field, $home_team_id );
         
             // Log the imported game data
-            error_log( 'Imported game data: ' . print_r( $data, true ) );
+          
         }
 
         private static function get_or_create_team( $team_name ) {
@@ -114,7 +114,7 @@ if ( ! class_exists( 'Team_Schedule_Import' ) ) {
             update_post_meta( $team_id, 'team_games', $games );
         
             // Log the added game data
-            error_log( 'Added game to team ' . $team_id . ': ' . print_r( end( $games ), true ) );
+           
         }
 
         private static function parse_date( $date_str ) {

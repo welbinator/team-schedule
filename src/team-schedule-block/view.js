@@ -7,14 +7,12 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch('/wp-json/team-schedule/v1/teams')
             .then(response => response.json())
             .then(data => {
-                console.log('Fetched teams:', data);
                 if (data.length === 0) {
                     dropdown.innerHTML = '<option value="">No teams found</option>';
                 } else {
                     data.forEach(team => {
-                        console.log('Adding team to dropdown:', team.id, team.post_title);
                         const option = document.createElement('option');
-                        option.value = team.ID; // Ensure the value is correctly assigned
+                        option.value = team.ID;
                         option.textContent = team.post_title;
                         dropdown.appendChild(option);
                     });
@@ -24,22 +22,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
         dropdown.addEventListener('change', function() {
             const teamId = dropdown.value;
-            console.log('Selected team ID:', teamId); // Log the selected team ID
             if (teamId) {
                 fetch(`/wp-json/team-schedule/v1/games?team=${teamId}`)
                     .then(response => response.json())
                     .then(data => {
-                        console.log('Fetched games for team', teamId, ':', data);
                         gamesContainer.innerHTML = ''; // Clear previous games
 
                         if (data.length === 0) {
                             gamesContainer.innerHTML = 'No games found for this team.';
                         } else {
                             const gamesList = document.createElement('ul');
+                            gamesList.classList.add('game-list'); // Add class to ul
+
+                            // Add header row
+                            const headerItem = document.createElement('li');
+                            headerItem.classList.add('game-list-header');
+                            headerItem.innerHTML = '<strong>Date</strong>, <strong>Time</strong>, <strong>Home/Away</strong>, <strong>Field</strong>, <strong>Opponent</strong>';
+                            gamesList.appendChild(headerItem);
+
                             data.forEach(game => {
-                                console.log('Processing game:', game);
                                 const gameItem = document.createElement('li');
-                                gameItem.textContent = `Date: ${game.date}, Time: ${game.time}, Home/Away: ${game.home_away}, Field: ${game.field}, Opponent: ${game.opponent}`;
+                                gameItem.classList.add('game-list-item'); // Add class to li
+                                gameItem.textContent = `Date: ${game.date}, Time: ${game.time}, ${game.home_away}, Field: ${game.field}, Opponent: ${game.opponent}`;
                                 gamesList.appendChild(gameItem);
                             });
                             gamesContainer.appendChild(gamesList);
