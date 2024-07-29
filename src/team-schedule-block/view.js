@@ -3,56 +3,134 @@ document.addEventListener('DOMContentLoaded', function() {
     const gamesContainer = document.querySelector('.team-schedule-games');
 
     if (dropdown) {
-        // Fetch teams and populate the dropdown
-        fetch('/wp-json/team-schedule/v1/teams')
-            .then(response => response.json())
-            .then(data => {
-                if (data.length === 0) {
-                    dropdown.innerHTML = '<option value="">No teams found</option>';
+        if (!dropdown.hasEventListener) {
+            dropdown.hasEventListener = true;
+
+            // Fetch teams and populate the dropdown
+            fetch('/wp-json/team-schedule/v1/teams')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length === 0) {
+                        dropdown.innerHTML = '<option value="">No teams found</option>';
+                    } else {
+                        dropdown.innerHTML = ''; // Clear previous options
+                        data.forEach(team => {
+                            const option = document.createElement('option');
+                            option.value = team.ID;
+                            option.textContent = team.post_title;
+                            dropdown.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error fetching teams:', error));
+
+            dropdown.addEventListener('change', function() {
+                const teamId = dropdown.value;
+                if (teamId) {
+                    fetch(`/wp-json/team-schedule/v1/games?team=${teamId}`)
+                        .then(response => response.json())
+                        .then(async data => {
+                            gamesContainer.innerHTML = ''; // Clear previous games
+
+                            if (data.length === 0) {
+                                gamesContainer.innerHTML = 'No games found for this team.';
+                            } else {
+                                const card = document.createElement('div');
+                                card.classList.add('rounded-lg', 'border', 'bg-card', 'text-card-foreground', 'shadow-sm');
+
+                                const header = document.createElement('div');
+                                header.classList.add('flex', 'flex-col', 'space-y-1.5', 'p-6', 'px-7');
+
+                                const title = document.createElement('h3');
+                                title.classList.add('whitespace-nowrap', 'text-2xl', 'font-semibold', 'leading-none', 'tracking-tight');
+                                title.textContent = 'Upcoming Games';
+
+                                const description = document.createElement('p');
+                                description.classList.add('text-sm', 'text-muted-foreground');
+                                description.textContent = 'Schedule of upcoming games.';
+
+                                header.appendChild(title);
+                                header.appendChild(description);
+
+                                const content = document.createElement('div');
+                                content.classList.add('p-6');
+
+                                const tableWrapper = document.createElement('div');
+                                tableWrapper.classList.add('relative', 'w-full', 'overflow-auto');
+
+                                const table = document.createElement('table');
+                                table.classList.add('w-full', 'caption-bottom', 'text-sm');
+
+                                const thead = document.createElement('thead');
+                                thead.classList.add('[&amp;_tr]:border-b');
+                                const headerRow = document.createElement('tr');
+                                headerRow.classList.add('border-b', 'transition-colors', 'hover:bg-muted/50', 'data-[state=selected]:bg-muted');
+
+                                const columns = ['Date', 'Time', 'Home/Away', 'Field', 'Opponent'];
+                                columns.forEach(column => {
+                                    const th = document.createElement('th');
+                                    th.classList.add('h-12', 'px-4', 'text-left', 'align-middle', 'font-medium', 'text-muted-foreground');
+                                    th.textContent = column;
+                                    headerRow.appendChild(th);
+                                });
+
+                                thead.appendChild(headerRow);
+                                table.appendChild(thead);
+
+                                const tbody = document.createElement('tbody');
+                                tbody.classList.add('[&amp;_tr:last-child]:border-0');
+
+                                for (const game of data) {
+                                    const opponentName = await fetchOpponentName(game.opponent);
+                                    const gameRow = document.createElement('tr');
+                                    gameRow.classList.add('border-b', 'transition-colors', 'hover:bg-muted/50', 'data-[state=selected]:bg-muted');
+
+                                    const cells = [game.date, formatTime(game.time), game.home_away, game.field, opponentName];
+                                    cells.forEach(cell => {
+                                        const td = document.createElement('td');
+                                        td.classList.add('p-4', 'align-middle');
+                                        td.textContent = cell;
+                                        gameRow.appendChild(td);
+                                    });
+
+                                    tbody.appendChild(gameRow);
+                                }
+
+                                table.appendChild(tbody);
+                                tableWrapper.appendChild(table);
+                                content.appendChild(tableWrapper);
+
+                                card.appendChild(header);
+                                card.appendChild(content);
+
+                                gamesContainer.appendChild(card);
+                            }
+                        })
+                        .catch(error => console.error('Error fetching games:', error));
                 } else {
-                    data.forEach(team => {
-                        const option = document.createElement('option');
-                        option.value = team.ID;
-                        option.textContent = team.post_title;
-                        dropdown.appendChild(option);
-                    });
+                    gamesContainer.innerHTML = 'Please choose a team.';
                 }
-            })
-            .catch(error => console.error('Error fetching teams:', error));
-
-        dropdown.addEventListener('change', function() {
-            const teamId = dropdown.value;
-            if (teamId) {
-                fetch(`/wp-json/team-schedule/v1/games?team=${teamId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        gamesContainer.innerHTML = ''; // Clear previous games
-
-                        if (data.length === 0) {
-                            gamesContainer.innerHTML = 'No games found for this team.';
-                        } else {
-                            const gamesList = document.createElement('ul');
-                            gamesList.classList.add('game-list'); // Add class to ul
-
-                            // Add header row
-                            const headerItem = document.createElement('li');
-                            headerItem.classList.add('game-list-header');
-                            headerItem.innerHTML = '<strong>Date</strong>, <strong>Time</strong>, <strong>Home/Away</strong>, <strong>Field</strong>, <strong>Opponent</strong>';
-                            gamesList.appendChild(headerItem);
-
-                            data.forEach(game => {
-                                const gameItem = document.createElement('li');
-                                gameItem.classList.add('game-list-item'); // Add class to li
-                                gameItem.textContent = `Date: ${game.date}, Time: ${game.time}, ${game.home_away}, Field: ${game.field}, Opponent: ${game.opponent}`;
-                                gamesList.appendChild(gameItem);
-                            });
-                            gamesContainer.appendChild(gamesList);
-                        }
-                    })
-                    .catch(error => console.error('Error fetching games:', error));
-            } else {
-                gamesContainer.innerHTML = 'Please choose a team.';
-            }
-        });
+            });
+        }
     }
 });
+
+async function fetchOpponentName(opponentId) {
+    try {
+        const response = await fetch(`/wp-json/wp/v2/team/${opponentId}`);
+        const data = await response.json();
+        return data.title.rendered || 'Unknown Opponent';
+    } catch (error) {
+        console.error('Error fetching opponent name:', error);
+        return 'Unknown Opponent';
+    }
+}
+
+function formatTime(timeString) {
+    const [hours, minutes] = timeString.split(':');
+    const date = new Date();
+    date.setHours(hours);
+    date.setMinutes(minutes);
+    const options = { hour: 'numeric', minute: 'numeric', hour12: true };
+    return new Intl.DateTimeFormat('en-US', options).format(date);
+}
