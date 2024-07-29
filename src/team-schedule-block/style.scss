@@ -11,6 +11,8 @@
 	padding: 2px;
 }
 
-.style {
-	background: blue;
+table.team-frontend thead tr th, table#team-games-table tbody tr td {
+    padding: .7em 1em;
+    border: 1px solid #d1d5db;
+    border-width: 0 1px 1px 0;
 }
