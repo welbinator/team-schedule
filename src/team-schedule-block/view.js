@@ -7,17 +7,17 @@ document.addEventListener('DOMContentLoaded', function() {
             dropdown.hasEventListener = true;
 
             // Fetch teams and populate the dropdown
-            fetch('/wp-json/team-schedule/v1/teams')
+            fetch('/wp-json/wp/v2/team_schedule_team')
                 .then(response => response.json())
                 .then(data => {
+                    dropdown.innerHTML = '<option value="">Please select your team</option>'; // Default option
                     if (data.length === 0) {
-                        dropdown.innerHTML = '<option value="">No teams found</option>';
+                        dropdown.innerHTML += '<option value="">No teams found</option>';
                     } else {
-                        dropdown.innerHTML = ''; // Clear previous options
                         data.forEach(team => {
                             const option = document.createElement('option');
-                            option.value = team.ID;
-                            option.textContent = team.post_title;
+                            option.value = team.id;
+                            option.textContent = team.title.rendered;
                             dropdown.appendChild(option);
                         });
                     }
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function fetchOpponentName(opponentId) {
     try {
-        const response = await fetch(`/wp-json/wp/v2/team/${opponentId}`);
+        const response = await fetch(`/wp-json/wp/v2/team_schedule_team/${opponentId}`);
         const data = await response.json();
         return data.title.rendered || 'Unknown Opponent';
     } catch (error) {
