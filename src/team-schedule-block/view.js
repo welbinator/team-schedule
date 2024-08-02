@@ -6,23 +6,46 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!dropdown.hasEventListener) {
             dropdown.hasEventListener = true;
 
-            // Fetch teams and populate the dropdown
-            fetch('/wp-json/wp/v2/team_schedule_team')
-                .then(response => response.json())
-                .then(data => {
-                    dropdown.innerHTML = '<option value="">Please select your team</option>'; // Default option
-                    if (data.length === 0) {
-                        dropdown.innerHTML += '<option value="">No teams found</option>';
-                    } else {
-                        data.forEach(team => {
-                            const option = document.createElement('option');
-                            option.value = team.id;
-                            option.textContent = team.title.rendered;
-                            dropdown.appendChild(option);
-                        });
+            // Function to fetch all teams with pagination
+            const fetchAllTeams = async () => {
+                let page = 1;
+                let allTeams = [];
+                let fetchMore = true;
+
+                while (fetchMore) {
+                    try {
+                        const response = await fetch(`/wp-json/wp/v2/team_schedule_team?per_page=100&page=${page}`);
+                        const data = await response.json();
+
+                        if (data.length > 0) {
+                            allTeams = allTeams.concat(data);
+                            page++;
+                        } else {
+                            fetchMore = false;
+                        }
+                    } catch (error) {
+                        console.error('Error fetching teams:', error);
+                        fetchMore = false;
                     }
-                })
-                .catch(error => console.error('Error fetching teams:', error));
+                }
+
+                return allTeams;
+            };
+
+            // Fetch teams and populate the dropdown
+            fetchAllTeams().then(data => {
+                dropdown.innerHTML = '<option value="">Please select your team</option>'; // Default option
+                if (data.length === 0) {
+                    dropdown.innerHTML += '<option value="">No teams found</option>';
+                } else {
+                    data.forEach(team => {
+                        const option = document.createElement('option');
+                        option.value = team.id;
+                        option.textContent = team.title.rendered;
+                        dropdown.appendChild(option);
+                    });
+                }
+            }).catch(error => console.error('Error fetching teams:', error));
 
             dropdown.addEventListener('change', function() {
                 const teamId = dropdown.value;
@@ -47,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                                 const description = document.createElement('p');
                                 description.classList.add('text-sm', 'text-muted-foreground');
-                                
+                                description.textContent = 'Schedule of upcoming games.';
 
                                 header.appendChild(title);
                                 header.appendChild(description);
@@ -59,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 tableWrapper.classList.add('relative', 'w-full', 'overflow-auto');
 
                                 const table = document.createElement('table');
-                                table.classList.add('w-full', 'caption-bottom', 'text-sm', 'team-frontend');
+                                table.classList.add('w-full', 'caption-bottom', 'text-sm');
 
                                 const thead = document.createElement('thead');
                                 thead.classList.add('[&amp;_tr]:border-b');
