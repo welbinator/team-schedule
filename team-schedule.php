@@ -51,4 +51,15 @@ function enqueue_team_schedule_assets() {
 }
 add_action( 'wp_enqueue_scripts', 'enqueue_team_schedule_assets' );
 
-?>
+function team_schedule_single_template( $template ) {
+    if ( is_singular( 'team_schedule_team' ) ) {
+        $plugin_template = plugin_dir_path( __FILE__ ) . 'templates/single-team.php';
+        if ( file_exists( $plugin_template ) ) {
+            return $plugin_template;
+        }
+    }
+    return $template;
+}
+add_filter( 'template_include', 'team_schedule_single_template' );
+
+

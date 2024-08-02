@@ -32,6 +32,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 return allTeams;
             };
 
+            // Function to decode HTML entities
+            const decodeHtmlEntities = (str) => {
+                const textarea = document.createElement('textarea');
+                textarea.innerHTML = str;
+                return textarea.value;
+            };
+
             // Fetch teams and populate the dropdown
             fetchAllTeams().then(data => {
                 dropdown.innerHTML = '<option value="">Please select your team</option>'; // Default option
@@ -41,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     data.forEach(team => {
                         const option = document.createElement('option');
                         option.value = team.id;
-                        option.textContent = team.title.rendered;
+                        option.textContent = decodeHtmlEntities(team.title.rendered);
                         dropdown.appendChild(option);
                     });
                 }
