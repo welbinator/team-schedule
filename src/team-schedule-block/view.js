@@ -42,6 +42,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.length === 0) {
                     dropdown.innerHTML += '<option value="">No teams found</option>';
                 } else {
+                    // Sort teams alphabetically
+                    data.sort((a, b) => {
+                        const nameA = decodeHtmlEntities(a.title.rendered).toUpperCase();
+                        const nameB = decodeHtmlEntities(b.title.rendered).toUpperCase();
+                        return (nameA < nameB) ? -1 : (nameA > nameB) ? 1 : 0;
+                    });
+
                     data.forEach(team => {
                         const option = document.createElement('option');
                         option.value = team.id;
