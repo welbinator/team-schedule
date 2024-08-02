@@ -14,7 +14,7 @@ if ( ! is_array( $games ) ) {
 // Function to get the opponent's name
 function get_opponent_name( $opponent_id ) {
     $opponent = get_post( $opponent_id );
-    return $opponent ? $opponent->post_title : 'Unknown Opponent';
+    return $opponent ? html_entity_decode( $opponent->post_title ) : 'Unknown Opponent';
 }
 
 // Function to format the time
@@ -26,7 +26,7 @@ function format_time( $time ) {
 
 <div class="rounded-lg border bg-card text-card-foreground shadow-sm" data-v0-t="card">
   <div class="flex flex-col space-y-1.5 p-6 px-7">
-    <h3 class="whitespace-nowrap text-2xl font-semibold leading-none tracking-tight"><?php echo get_the_title(); ?></h3>
+    <h3 class="whitespace-nowrap text-2xl font-semibold leading-none tracking-tight"><?php echo html_entity_decode( get_the_title() ); ?></h3>
     <p class="text-sm text-muted-foreground">Schedule of upcoming games.</p>
   </div>
   <div class="p-6">
@@ -60,3 +60,4 @@ function format_time( $time ) {
 <?php
 get_footer();
 ?>
+

@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     cells.forEach(cell => {
                                         const td = document.createElement('td');
                                         td.classList.add('p-4', 'align-middle');
-                                        td.textContent = cell;
+                                        td.textContent = decodeHtmlEntities(cell);
                                         gameRow.appendChild(td);
                                     });
 
@@ -149,11 +149,17 @@ async function fetchOpponentName(opponentId) {
     try {
         const response = await fetch(`/wp-json/wp/v2/team_schedule_team/${opponentId}`);
         const data = await response.json();
-        return data.title.rendered || 'Unknown Opponent';
+        return decodeHtmlEntities(data.title.rendered) || 'Unknown Opponent';
     } catch (error) {
         console.error('Error fetching opponent name:', error);
         return 'Unknown Opponent';
     }
+}
+
+function decodeHtmlEntities(str) {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = str;
+    return textarea.value;
 }
 
 function formatTime(timeString) {
