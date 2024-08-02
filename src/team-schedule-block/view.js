@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!dropdown.hasEventListener) {
             dropdown.hasEventListener = true;
 
-            // Function to fetch all teams with pagination
             const fetchAllTeams = async () => {
                 let page = 1;
                 let allTeams = [];
@@ -32,14 +31,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 return allTeams;
             };
 
-            // Function to decode HTML entities
             const decodeHtmlEntities = (str) => {
                 const textarea = document.createElement('textarea');
                 textarea.innerHTML = str;
                 return textarea.value;
             };
 
-            // Fetch teams and populate the dropdown
             fetchAllTeams().then(data => {
                 dropdown.innerHTML = '<option value="">Please select your team</option>'; // Default option
                 if (data.length === 0) {
@@ -111,17 +108,25 @@ document.addEventListener('DOMContentLoaded', function() {
                                 tbody.classList.add('[&amp;_tr:last-child]:border-0');
 
                                 for (const game of data) {
-                                    const opponentName = await fetchOpponentName(game.opponent);
+                                    const opponentData = await fetchOpponentData(game.opponent);
                                     const gameRow = document.createElement('tr');
                                     gameRow.classList.add('border-b', 'transition-colors', 'hover:bg-muted/50', 'data-[state=selected]:bg-muted');
 
-                                    const cells = [game.date, formatTime(game.time), game.home_away, game.field, opponentName];
+                                    const cells = [game.date, formatTime(game.time), game.home_away, game.field];
                                     cells.forEach(cell => {
                                         const td = document.createElement('td');
                                         td.classList.add('p-4', 'align-middle');
                                         td.textContent = decodeHtmlEntities(cell);
                                         gameRow.appendChild(td);
                                     });
+
+                                    const opponentTd = document.createElement('td');
+                                    opponentTd.classList.add('p-4', 'align-middle');
+                                    const opponentLink = document.createElement('a');
+                                    opponentLink.href = opponentData.url;
+                                    opponentLink.textContent = opponentData.name;
+                                    opponentTd.appendChild(opponentLink);
+                                    gameRow.appendChild(opponentTd);
 
                                     tbody.appendChild(gameRow);
                                 }
@@ -145,14 +150,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-async function fetchOpponentName(opponentId) {
+async function fetchOpponentData(opponentId) {
     try {
         const response = await fetch(`/wp-json/wp/v2/team_schedule_team/${opponentId}`);
         const data = await response.json();
-        return decodeHtmlEntities(data.title.rendered) || 'Unknown Opponent';
+        return {
+            name: decodeHtmlEntities(data.title.rendered),
+            url: data.link
+        };
     } catch (error) {
-        console.error('Error fetching opponent name:', error);
-        return 'Unknown Opponent';
+        console.error('Error fetching opponent data:', error);
+        return {
+            name: 'Unknown Opponent',
+            url: '#'
+        };
     }
 }
 

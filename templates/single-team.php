@@ -11,10 +11,15 @@ if ( ! is_array( $games ) ) {
     $games = [];
 }
 
-// Function to get the opponent's name
+// Function to get the opponent's name and link
 function get_opponent_name( $opponent_id ) {
     $opponent = get_post( $opponent_id );
-    return $opponent ? html_entity_decode( $opponent->post_title ) : 'Unknown Opponent';
+    if ( $opponent ) {
+        $opponent_name = html_entity_decode( $opponent->post_title );
+        $opponent_link = get_permalink( $opponent_id );
+        return '<a href="' . esc_url( $opponent_link ) . '">' . esc_html( $opponent_name ) . '</a>';
+    }
+    return 'Unknown Opponent';
 }
 
 // Function to format the time
@@ -48,7 +53,7 @@ function format_time( $time ) {
             <td class="p-4 align-middle"><?php echo esc_html( format_time( $game['time'] ) ); ?></td>
             <td class="p-4 align-middle"><?php echo esc_html( $game['home_away'] ); ?></td>
             <td class="p-4 align-middle"><?php echo esc_html( $game['field'] ); ?></td>
-            <td class="p-4 align-middle"><?php echo esc_html( get_opponent_name( $game['opponent'] ) ); ?></td>
+            <td class="p-4 align-middle"><?php echo get_opponent_name( $game['opponent'] ); ?></td>
           </tr>
           <?php endforeach; ?>
         </tbody>
@@ -60,4 +65,3 @@ function format_time( $time ) {
 <?php
 get_footer();
 ?>
-
