@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 tableWrapper.classList.add('relative', 'w-full', 'overflow-auto');
 
                                 const table = document.createElement('table');
-                                table.classList.add('w-full', 'caption-bottom', 'text-sm');
+                                table.classList.add('w-full', 'caption-bottom', 'text-sm', 'team-frontend');
 
                                 const thead = document.createElement('thead');
                                 thead.classList.add('[&amp;_tr]:border-b');
