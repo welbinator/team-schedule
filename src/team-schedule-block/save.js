@@ -6,7 +6,7 @@ export default function save() {
             <select className="team-schedule-dropdown">
                 <option value="">{ 'Please select your team' }</option>
             </select>
-            <div className="team-schedule-games">
+            <div className="ts--games-container">
             <p className="ts--dropdown-tooltip">{ 'Choose your team from the dropdown above' }</p>
             </div>
         </div>

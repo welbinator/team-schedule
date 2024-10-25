@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     const dropdown = document.querySelector('.team-schedule-dropdown');
-    const gamesContainer = document.querySelector('.team-schedule-games');
+    const gamesContainer = document.querySelector('.ts--games-container');
 
     if (dropdown) {
         if (!dropdown.hasEventListener) {
