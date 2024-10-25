@@ -4,7 +4,7 @@
   "main": "index.js",
   "devDependencies": {},
   "scripts": {
-    "build:css": "postcss app/assets/css/styles.css -o dist/styles.css",
+    "build:css": "postcss assets/css/styles.css -o dist/styles.css",
     "build:js": "wp-scripts build",
     "build": "wp-scripts build",
     "start": "wp-scripts start"

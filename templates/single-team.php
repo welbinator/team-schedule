@@ -32,9 +32,8 @@ function format_time( $time ) {
 <div class="rounded-lg border bg-card text-card-foreground shadow-sm" data-v0-t="card">
   <div class="flex flex-col space-y-1.5 p-6 px-7">
     <h3 class="whitespace-nowrap text-2xl font-semibold leading-none tracking-tight"><?php echo html_entity_decode( get_the_title() ); ?></h3>
-    <p class="text-sm text-muted-foreground">Schedule of upcoming games.</p>
   </div>
-  <div class="p-6">
+  <div class="ts--table-container pl-6 pr-6 pb-6 shadow-sm">
     <div class="relative w-full overflow-auto">
       <table class="w-full caption-bottom text-sm team-frontend">
         <thead class="[&amp;_tr]:border-b">

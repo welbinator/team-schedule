@@ -41,6 +41,7 @@ function team_schedule_init() {
 add_action( 'plugins_loaded', 'team_schedule_init' );
 
 function enqueue_team_schedule_assets() {
+    // Enqueue the JavaScript for the block
     wp_enqueue_script(
         'team-schedule-block-view',
         plugin_dir_url( __FILE__ ) . 'build/team-schedule-block/view.js',
@@ -48,8 +49,17 @@ function enqueue_team_schedule_assets() {
         '1.0',
         true
     );
+
+    // Enqueue the stylesheet located in dist/styles.css
+    wp_enqueue_style(
+        'team-schedule-styles',
+        plugin_dir_url( __FILE__ ) . 'dist/styles.css',
+        array(),
+        '1.0'
+    );
 }
 add_action( 'wp_enqueue_scripts', 'enqueue_team_schedule_assets' );
+
 
 function team_schedule_single_template( $template ) {
     if ( is_singular( 'team_schedule_team' ) ) {

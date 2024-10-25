@@ -78,16 +78,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 const title = document.createElement('h3');
                                 title.classList.add('whitespace-nowrap', 'text-2xl', 'font-semibold', 'leading-none', 'tracking-tight');
                                 title.textContent = 'Upcoming Games';
-
-                                const description = document.createElement('p');
-                                description.classList.add('text-sm', 'text-muted-foreground');
-                                description.textContent = 'Schedule of upcoming games.';
-
+                        
                                 header.appendChild(title);
-                                header.appendChild(description);
-
+                               
                                 const content = document.createElement('div');
-                                content.classList.add('p-6');
+                                content.classList.add('ts--table-container', 'pl-6', 'pr-6', 'pb-6', 'shadow-sm');
 
                                 const tableWrapper = document.createElement('div');
                                 tableWrapper.classList.add('relative', 'w-full', 'overflow-auto');
@@ -96,9 +91,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 table.classList.add('w-full', 'caption-bottom', 'text-sm', 'team-frontend');
 
                                 const thead = document.createElement('thead');
-                                thead.classList.add('[&amp;_tr]:border-b');
+                                thead.classList.add('[&amp;_tr]:border');
                                 const headerRow = document.createElement('tr');
-                                headerRow.classList.add('border-b', 'transition-colors', 'hover:bg-muted/50', 'data-[state=selected]:bg-muted');
+                                headerRow.classList.add('border', 'transition-colors', 'data-[state=selected]:bg-muted');
 
                                 const columns = ['Date', 'Time', 'Home/Away', 'Field', 'Opponent'];
                                 columns.forEach(column => {
@@ -117,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 for (const game of data) {
                                     const opponentData = await fetchOpponentData(game.opponent);
                                     const gameRow = document.createElement('tr');
-                                    gameRow.classList.add('border-b', 'transition-colors', 'hover:bg-muted/50', 'data-[state=selected]:bg-muted');
+                                    gameRow.classList.add('border', 'transition-colors', 'hover:bg-muted/50', 'data-[state=selected]:bg-muted');
 
                                     const cells = [game.date, formatTime(game.time), game.home_away, game.field];
                                     cells.forEach(cell => {
