@@ -5,16 +5,16 @@ if ( ! class_exists( 'Team_Schedule_Import' ) ) {
 
         public static function init() {
             add_action( 'admin_menu', [ __CLASS__, 'admin_menu' ] );
+            add_action( 'wp_ajax_team_schedule_delete_games', [ __CLASS__, 'delete_all_games' ] );
+            add_action( 'wp_ajax_team_schedule_delete_teams', [ __CLASS__, 'delete_all_teams' ] );
             add_action( 'admin_post_team_schedule_import', [ __CLASS__, 'handle_csv_import' ] );
-            add_action( 'admin_post_team_schedule_delete_games', [ __CLASS__, 'delete_all_games' ] );
-            add_action( 'admin_post_team_schedule_delete_teams', [ __CLASS__, 'delete_all_teams' ] );
         }
 
         public static function admin_menu() {
             add_submenu_page(
                 'edit.php?post_type=team_schedule_team',
-                __( 'Import CSV', 'team-schedule' ),
-                __( 'Import CSV', 'team-schedule' ),
+                __( 'Settings', 'team-schedule' ),
+                __( 'Settings', 'team-schedule' ),
                 'manage_options',
                 'team-schedule-import',
                 [ __CLASS__, 'import_page' ]
@@ -31,14 +31,12 @@ if ( ! class_exists( 'Team_Schedule_Import' ) ) {
                     <input type="file" name="team_schedule_csv" required>
                     <input type="submit" value="<?php _e( 'Import CSV', 'team-schedule' ); ?>" class="button button-primary">
                 </form>
-                <form method="post" action="<?php echo admin_url( 'admin-post.php' ); ?>" onsubmit="return confirm('<?php _e( 'Are you sure you want to delete all game data? This action cannot be undone.', 'team-schedule' ); ?>');">
-                    <input type="hidden" name="action" value="team_schedule_delete_games">
-                    <?php wp_nonce_field( 'team_schedule_delete_games', 'team_schedule_delete_games_nonce' ); ?>
+                <form method="post" action="#" id="delete-games-form">
+                    <input type="hidden" name="security" id="team_schedule_delete_games_nonce" value="<?php echo wp_create_nonce( 'team_schedule_delete_games' ); ?>">
                     <input type="submit" value="<?php _e( 'Delete All Games', 'team-schedule' ); ?>" class="button button-danger">
                 </form>
-                <form method="post" action="<?php echo admin_url( 'admin-post.php' ); ?>" onsubmit="return confirm('<?php _e( 'Are you sure you want to delete all teams? This action cannot be undone.', 'team-schedule' ); ?>');">
-                    <input type="hidden" name="action" value="team_schedule_delete_teams">
-                    <?php wp_nonce_field( 'team_schedule_delete_teams', 'team_schedule_delete_teams_nonce' ); ?>
+                <form method="post" action="#" id="delete-teams-form">
+                    <input type="hidden" name="security" id="team_schedule_delete_teams_nonce" value="<?php echo wp_create_nonce( 'team_schedule_delete_teams' ); ?>">
                     <input type="submit" value="<?php _e( 'Delete All Teams', 'team-schedule' ); ?>" class="button button-danger">
                 </form>
             </div>
@@ -75,10 +73,10 @@ if ( ! class_exists( 'Team_Schedule_Import' ) ) {
             $date = self::parse_date( $data['Date'] );
             $time = self::parse_time( $data['Start Time'] );
             $field = sanitize_text_field( $data['Location Details'] );
-        
+
             $home_team_id = self::get_or_create_team( sanitize_text_field( $data['Home Team'] ) );
             $away_team_id = self::get_or_create_team( sanitize_text_field( $data['Away Team'] ) );
-        
+
             self::add_game_to_team( $home_team_id, $date, $time, 'Home', $field, $away_team_id );
             self::add_game_to_team( $away_team_id, $date, $time, 'Away', $field, $home_team_id );
         }
@@ -101,11 +99,11 @@ if ( ! class_exists( 'Team_Schedule_Import' ) ) {
 
         private static function add_game_to_team( $team_id, $date, $time, $home_away, $field, $opponent_id ) {
             $games = get_post_meta( $team_id, 'team_games', true );
-        
+
             if ( ! is_array( $games ) ) {
                 $games = [];
             }
-        
+
             $games[] = [
                 'date'      => $date,
                 'time'      => $time,
@@ -113,7 +111,7 @@ if ( ! class_exists( 'Team_Schedule_Import' ) ) {
                 'field'     => $field,
                 'opponent'  => $opponent_id,
             ];
-        
+
             update_post_meta( $team_id, 'team_games', $games );
         }
 
@@ -134,47 +132,41 @@ if ( ! class_exists( 'Team_Schedule_Import' ) ) {
         }
 
         public static function delete_all_games() {
-            if ( ! isset( $_POST['team_schedule_delete_games_nonce'] ) || ! wp_verify_nonce( $_POST['team_schedule_delete_games_nonce'], 'team_schedule_delete_games' ) ) {
-                wp_die( __( 'Nonce verification failed', 'team-schedule' ) );
-            }
+            check_ajax_referer( 'team_schedule_delete_games', 'security' );
 
             if ( ! current_user_can( 'manage_options' ) ) {
-                wp_die( __( 'You do not have permission to access this page', 'team-schedule' ) );
+                wp_send_json_error( __( 'You do not have permission to perform this action', 'team-schedule' ) );
             }
 
-            $teams = get_posts( array(
+            $teams = get_posts([
                 'post_type'   => 'team_schedule_team',
                 'numberposts' => -1,
-            ));
+            ]);
 
             foreach ( $teams as $team ) {
                 delete_post_meta( $team->ID, 'team_games' );
             }
 
-            wp_redirect( admin_url( 'edit.php?post_type=team_schedule_team' ) );
-            exit;
+            wp_send_json_success( __( 'All games deleted', 'team-schedule' ) );
         }
 
         public static function delete_all_teams() {
-            if ( ! isset( $_POST['team_schedule_delete_teams_nonce'] ) || ! wp_verify_nonce( $_POST['team_schedule_delete_teams_nonce'], 'team_schedule_delete_teams' ) ) {
-                wp_die( __( 'Nonce verification failed', 'team-schedule' ) );
-            }
+            check_ajax_referer( 'team_schedule_delete_teams', 'security' );
 
             if ( ! current_user_can( 'manage_options' ) ) {
-                wp_die( __( 'You do not have permission to access this page', 'team-schedule' ) );
+                wp_send_json_error( __( 'You do not have permission to perform this action', 'team-schedule' ) );
             }
 
-            $teams = get_posts( array(
+            $teams = get_posts([
                 'post_type'   => 'team_schedule_team',
                 'numberposts' => -1,
-            ));
+            ]);
 
             foreach ( $teams as $team ) {
                 wp_delete_post( $team->ID, true );
             }
 
-            wp_redirect( admin_url( 'edit.php?post_type=team_schedule_team' ) );
-            exit;
+            wp_send_json_success( __( 'All teams deleted', 'team-schedule' ) );
         }
     }
 

@@ -4,7 +4,7 @@ Plugin Name: Team Schedule
 Description: A plugin to display team schedules for sports leagues.
 Version: 1.0.9
 Author: James Welbes
-Text Domain: team-schedule-block
+Text Domain: team-schedule
 */
 
 // Prevent direct access to the file
@@ -58,7 +58,21 @@ function enqueue_team_schedule_assets() {
         '1.0'
     );
 }
+
 add_action( 'wp_enqueue_scripts', 'enqueue_team_schedule_assets' );
+function enqueue_admin_assets() {
+    wp_enqueue_script(
+        'team-schedule-admin',
+        plugin_dir_url( __FILE__ ) . 'includes/admin.js',
+        array( 'jquery', 'wp-i18n' ), // Include 'wp-i18n' as a dependency
+        '1.0',
+        true
+    );
+
+    // Set up translations for the script
+    wp_set_script_translations( 'team-schedule-admin', 'team-schedule' );
+}
+add_action( 'admin_enqueue_scripts', 'enqueue_admin_assets' );
 
 
 function team_schedule_single_template( $template ) {

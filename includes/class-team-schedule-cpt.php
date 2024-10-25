@@ -8,7 +8,7 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
             add_action( 'rest_api_init', [ __CLASS__, 'register_routes' ] );
             add_action( 'add_meta_boxes', [ __CLASS__, 'add_meta_boxes' ] );
             add_action( 'save_post_team_schedule_team', [ __CLASS__, 'save_meta_box_data' ] );
-            add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_scripts' ] );
+            // add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_scripts' ] );
             add_action( 'wp_ajax_delete_opponent_game', [ __CLASS__, 'delete_opponent_game' ] );
         }
 
@@ -145,9 +145,9 @@ if ( ! class_exists( 'Team_Schedule_CPT' ) ) {
             echo '</table>';
         }
 
-        public static function enqueue_admin_scripts() {
-            wp_enqueue_script( 'team-schedule-admin', plugin_dir_url( __FILE__ ) . 'admin.js', array( 'jquery' ), TEAM_SCHEDULE_VERSION, true );
-        }
+        // public static function enqueue_admin_scripts() {
+        //     wp_enqueue_script( 'team-schedule-admin', plugin_dir_url( __FILE__ ) . 'admin.js', array( 'jquery', 'wp-i18n' ), TEAM_SCHEDULE_VERSION, true );
+        // }
 
         public static function save_meta_box_data( $post_id ) {
             if ( ! isset( $_POST['team_games_meta_box_nonce'] ) || ! wp_verify_nonce( $_POST['team_games_meta_box_nonce'], 'team_games_meta_box' ) ) {
